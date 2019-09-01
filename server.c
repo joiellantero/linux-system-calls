@@ -61,6 +61,7 @@ int main(int argc, char *argv[]){
 						fclose(fwinners);
 
 						kill(child, SIGUSR1);
+						sleep(1);
 						break;
 		
 					}
@@ -79,9 +80,10 @@ int main(int argc, char *argv[]){
 			if(i == trials){
 				printf("%d exceeded number of trials, process will be terminated\n", child);
 				kill(child, SIGUSR2);
+				sleep(1);
 			}
 
-			kill(child, SIGKILL);			
+			//kill(child, SIGKILL);			
 		}
 
 		free (guess);

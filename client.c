@@ -9,27 +9,22 @@
 #include <signal.h>
 #include <unistd.h>
 
-//sig_atomic_t sig_handler_status;
-int child = 0, checker = 0;
+pid_t child;
 
 void sig_handler(int signo){
 	FILE* fcontestant = fopen("contestant.txt", "a+");
 
 	if (signo == SIGUSR1){
-		checker = 1;
 		printf("%d won\n", child);
    		fprintf(fcontestant, "%d - W\n", child);
 	}
 
 	if (signo == SIGUSR2){
-		checker = 1;
 		printf("%d lost\n", child);
    		fprintf(fcontestant, "%d - L\n", child);
 	}
 
 	fclose(fcontestant);
-
-	//wait(&sig_handler_status);
 }
 
 int main(int argc, char *argv[]){
@@ -49,7 +44,7 @@ int main(int argc, char *argv[]){
 		printf("Process pid %d\n", getpid());
 				
 		while(1){
-			pid_t child = fork();
+			child = fork();
 
 			if (child < 0){
 				perror("fork");
@@ -68,9 +63,9 @@ int main(int argc, char *argv[]){
 				signal(SIGUSR1, sig_handler);
 				signal(SIGUSR2, sig_handler);
 
-				sleep(1);
+				while(1){
 
-				while(1){				
+					sleep(1);				
 
 					printf("%d Please guess the code: ", child);
 					scanf("%s", guess);
@@ -83,8 +78,6 @@ int main(int argc, char *argv[]){
 					fd = open(argv[1], O_WRONLY);
 					write(fd, pid_guess, sizeof(pid_guess));
 					close(fd);	
-
-					sleep(1);
 				}
 				
 				exit(0);
