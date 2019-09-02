@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
  
@@ -14,7 +15,7 @@ int main(int argc, char *argv[]){
 	}
 
 	else {
-    	int fd, trials, child, i;
+    	int fd, trials, child, i, status, check = 0;
 		char secretCode[80], *guess, *child_pid, *pid_guess, *og_child_pid;
 		pid_guess = (char *) malloc (160);
 		child_pid = (char *) malloc (5);
@@ -24,13 +25,18 @@ int main(int argc, char *argv[]){
     	mkfifo(argv[1], 0666);
 		
 		while(1){
-			printf("Enter the number of trials per contestant: ");
-			scanf("%d", &trials);
+			if (check == 0){
+				printf("Enter the number of trials per contestant: ");
+				scanf("%d", &trials);
+				getchar();
  		
-			printf("Enter secret code: ");
-			scanf("%s", secretCode);
+				printf("Enter secret code: ");
+				scanf("%s", secretCode);
 
-			printf("Starting a new game with secret code %s\n", secretCode);
+				printf("Starting a new game with secret code %s\n", secretCode);
+
+				check = 0;
+			}
 
 			fd = open(argv[1], O_RDONLY);
 			read(fd, og_child_pid, sizeof(og_child_pid));
@@ -61,7 +67,9 @@ int main(int argc, char *argv[]){
 						fclose(fwinners);
 
 						kill(child, SIGUSR1);
-						sleep(1);
+
+						check = 0;
+						
 						break;
 		
 					}
@@ -77,13 +85,12 @@ int main(int argc, char *argv[]){
 				
 			}
 
-			if(i == trials){
+			if (i == trials){
 				printf("%d exceeded number of trials, process will be terminated\n", child);
 				kill(child, SIGUSR2);
-				sleep(1);
-			}
-
-			//kill(child, SIGKILL);			
+				check = 1;
+				
+			}				
 		}
 
 		free (guess);

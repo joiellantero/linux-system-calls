@@ -8,10 +8,12 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
 
-pid_t child;
+pid_t child = -1;
 
-void sig_handler(int signo){
+void sig_handler_won(int signo){
+
 	FILE* fcontestant = fopen("contestant.txt", "a+");
 
 	if (signo == SIGUSR1){
@@ -19,12 +21,23 @@ void sig_handler(int signo){
    		fprintf(fcontestant, "%d - W\n", child);
 	}
 
+	fclose(fcontestant);
+
+	exit(signo);
+}
+
+void sig_handler_lost(int signo){
+	
+	FILE* fcontestant = fopen("contestant.txt", "a+");
+
 	if (signo == SIGUSR2){
 		printf("%d lost\n", child);
-   		fprintf(fcontestant, "%d - L\n", child);
+		fprintf(fcontestant, "%d - L\n", child);
 	}
 
 	fclose(fcontestant);
+
+	exit(signo);
 }
 
 int main(int argc, char *argv[]){
@@ -33,7 +46,8 @@ int main(int argc, char *argv[]){
 	}
 
 	else{ 
-		int fd;
+		int fd, status;
+		time_t t;
    		char secretCode[80], *guess, *pid_guess, *child_pid; 
 		guess = (char *) malloc (80);
 		pid_guess = (char *) malloc (160);
@@ -60,12 +74,12 @@ int main(int argc, char *argv[]){
 				write(fd, child_pid, sizeof(child_pid));
 				close(fd);
 
-				signal(SIGUSR1, sig_handler);
-				signal(SIGUSR2, sig_handler);
+				signal(SIGUSR1, sig_handler_won);
+				signal(SIGUSR2, sig_handler_lost);
 
-				while(1){
+				while(1){	
 
-					sleep(1);				
+					sleep(1);			
 
 					printf("%d Please guess the code: ", child);
 					scanf("%s", guess);
@@ -77,15 +91,18 @@ int main(int argc, char *argv[]){
 
 					fd = open(argv[1], O_WRONLY);
 					write(fd, pid_guess, sizeof(pid_guess));
-					close(fd);	
+					close(fd);
+
 				}
 				
 				exit(0);
 			}
 
 			else {
+
 				sleep(1);
-				wait(NULL);
+			 	wait(NULL);
+		
 			}
 	
 			free (guess);
